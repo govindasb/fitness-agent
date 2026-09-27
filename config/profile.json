@@ -1,0 +1,14 @@
+{
+  "age": 27,
+  "sex": "male",
+  "height_cm": 170.18,
+  "starting_weight_kg": 98.1,
+  "target_weight_kg": 90.0,
+  "goal": "fat_loss",
+  "secondary_goals": [
+    "maintain_or_increase_strength",
+    "increase_cardio_endurance"
+  ],
+  "average_daily_steps": 10000,
+  "training_days_per_week": 4
+}

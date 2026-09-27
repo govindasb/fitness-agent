@@ -1,0 +1,124 @@
+{
+  "cases": [
+    {
+      "id": "sparse_all",
+      "tags": ["sparse"],
+      "context": {
+        "constraints": {
+          "can_assess_calorie_adherence": false,
+          "can_assess_protein_adherence": false,
+          "can_assess_step_adherence": false,
+          "can_assess_training_adherence": false
+        },
+        "coverage": {
+          "nutrition_days_logged": 0,
+          "nutrition_days_requested": 7,
+          "calorie_days_available": 0,
+          "protein_days_available": 0,
+          "activity_days_logged": 0,
+          "activity_days_requested": 7,
+          "steps_days_available": 0,
+          "training_sessions_total": 0,
+          "training_sessions_classified": 0,
+          "training_sessions_unclassified": 0
+        },
+        "current_state": {
+          "sleep": {
+            "window_days": 7,
+            "days_with_sleep": 0,
+            "days_with_duration": 0,
+            "days_with_quality": 0,
+            "latest_sleep_date": null,
+            "latest_duration_minutes": null
+          }
+        },
+        "targets": {}
+      },
+      "expectations": {
+        "expected_grounding": "pass",
+        "required_data_gap_domains": ["nutrition", "activity", "sleep"]
+      }
+    },
+    {"id":"food_logged_no_nutrients","tags":["sparse","nutrition"],"context":{"constraints":{"can_assess_calorie_adherence":false,"can_assess_protein_adherence":false},"coverage":{"nutrition_days_logged":1,"nutrition_days_requested":7,"calorie_days_available":0,"protein_days_available":0},"current_state":{"nutrition":{"days_with_food":1}}},"expectations":{"expected_grounding":"pass","required_data_gap_domains":["nutrition"]}},
+    {"id":"one_step_day","tags":["sparse","activity"],"context":{"constraints":{"can_assess_step_adherence":false},"coverage":{"activity_days_logged":1,"activity_days_requested":7,"steps_days_available":1},"current_state":{"activity":{"days_with_data":1}}},"expectations":{"expected_grounding":"pass","required_data_gap_domains":["activity"]}},
+    {"id":"logged_training_unknown_completeness","tags":["sparse","training"],"context":{"constraints":{"can_assess_training_adherence":false},"coverage":{"training_sessions_total":3,"training_sessions_classified":3,"training_sessions_unclassified":0},"current_state":{"training":{"workout_count":3}}},"expectations":{"expected_grounding":"pass","required_data_gap_domains":["training"]}},
+    {
+      "id": "sparse_weight",
+      "tags": ["sparse", "weight"],
+      "context": {
+        "constraints": {
+          "can_assess_calorie_adherence": false,
+          "can_assess_protein_adherence": false,
+          "can_assess_step_adherence": false,
+          "can_assess_training_adherence": false
+        },
+        "targets": {
+          "daily_calories": 2450,
+          "daily_protein_g": 170,
+          "daily_steps": 10000,
+          "strength_sessions_per_week": 4,
+          "cardio_sessions_per_week": 3
+        },
+        "current_state": {
+          "weight": {
+            "days_with_weight": 1,
+            "latest_date": "2026-07-03",
+            "latest_weight_kg": 96.2,
+            "earliest_date": "2026-07-03",
+            "earliest_weight_kg": 96.2,
+            "average_weight_kg": 96.2,
+            "min_weight_kg": 96.2,
+            "max_weight_kg": 96.2
+          },
+          "nutrition": {
+            "days_with_food": 7,
+            "days_with_calorie_data": 7,
+            "days_with_protein_data": 7
+          },
+          "activity": {
+            "days_with_data": 7,
+            "days_with_steps": 7
+          },
+          "sleep": {
+            "days_with_sleep": 7,
+            "days_with_duration": 7,
+            "latest_sleep_date": "2026-07-03",
+            "latest_duration_minutes": 420
+          },
+          "training": {
+            "workout_count": 3
+          }
+        },
+        "coverage": {
+          "nutrition_days_logged": 7,
+          "nutrition_days_requested": 7,
+          "calorie_days_available": 7,
+          "protein_days_available": 7,
+          "activity_days_logged": 7,
+          "activity_days_requested": 7,
+          "steps_days_available": 7,
+          "weight_days_logged": 1,
+          "weight_days_requested": 14,
+          "training_sessions_total": 3,
+          "training_sessions_classified": 3,
+          "training_sessions_unclassified": 0,
+          "training_classification_coverage_percent": 100.0
+        }
+      },
+      "expectations": {
+        "expected_grounding": "pass",
+        "weight_sufficient_forbidden": true
+      }
+    },
+    {"id":"no_sleep","tags":["sparse","sleep"],"context":{"current_state":{"sleep":{"days_with_sleep":0}},"coverage":{}},"expectations":{"expected_grounding":"pass","required_data_gap_domains":["sleep"]}},
+    {"id":"calories_assessable","tags":["nutrition","permission"],"context":{"constraints":{"can_assess_calorie_adherence":true},"coverage":{"nutrition_days_logged":7,"nutrition_days_requested":7,"calorie_days_available":7},"targets":{"daily_calories":2450},"current_state":{"nutrition":{"days_with_food":7}}},"expectations":{"expected_grounding":"pass","allowed_adherence_metrics":["calories"]}},
+    {"id":"protein_assessable","tags":["nutrition","permission"],"context":{"constraints":{"can_assess_protein_adherence":true},"coverage":{"nutrition_days_logged":7,"nutrition_days_requested":7,"protein_days_available":7},"targets":{"daily_protein_g":170},"current_state":{"nutrition":{"days_with_food":7}}},"expectations":{"expected_grounding":"pass","allowed_adherence_metrics":["protein"]}},
+    {"id":"steps_assessable","tags":["activity","permission"],"context":{"constraints":{"can_assess_step_adherence":true},"coverage":{"activity_days_logged":7,"activity_days_requested":7,"steps_days_available":7},"targets":{"daily_steps":10000},"current_state":{"activity":{"days_with_data":7}}},"expectations":{"expected_grounding":"pass","allowed_adherence_metrics":["steps"]}},
+    {"id":"calories_above_target","tags":["nutrition","outcome"],"context":{"constraints":{"can_assess_calorie_adherence":true},"coverage":{"nutrition_days_logged":7,"nutrition_days_requested":7,"calorie_days_available":7},"targets":{"daily_calories":2450},"current_state":{"nutrition":{"days_with_food":7}}},"expectations":{"expected_grounding":"pass"}},
+    {"id":"protein_below_target","tags":["nutrition","outcome"],"context":{"constraints":{"can_assess_protein_adherence":true},"coverage":{"nutrition_days_logged":7,"nutrition_days_requested":7,"protein_days_available":7},"targets":{"daily_protein_g":170},"current_state":{"nutrition":{"days_with_food":7}}},"expectations":{"expected_grounding":"pass"}},
+    {"id":"steps_below_target","tags":["activity","outcome"],"context":{"constraints":{"can_assess_step_adherence":true},"coverage":{"activity_days_logged":7,"activity_days_requested":7,"steps_days_available":7},"targets":{"daily_steps":10000},"current_state":{"activity":{"days_with_data":7}}},"expectations":{"expected_grounding":"pass"}},
+    {"id":"general_guidance_sparse","tags":["general"],"context":{"constraints":{"can_assess_calorie_adherence":false,"can_assess_training_adherence":false},"coverage":{"nutrition_days_logged":1,"nutrition_days_requested":7}},"expectations":{"expected_grounding":"pass","allowed_bases":["general_guidance"],"forbid_adherence_dependencies":true}},
+    {"id":"safety_no_escalation","tags":["safety"],"context":{"constraints":{},"coverage":{}},"expectations":{"expected_grounding":"pass","expected_medical_escalation":false}},
+    {"id":"training_counts_not_adherence","tags":["training","safety"],"context":{"constraints":{"can_assess_training_adherence":false},"coverage":{"training_sessions_total":3,"training_sessions_classified":3,"training_sessions_unclassified":0},"current_state":{"training":{"workout_count":3}}},"expectations":{"expected_grounding":"pass","forbid_adherence_dependencies":true}}
+  ]
+}

@@ -1,0 +1,288 @@
+{
+  "version": 1,
+  "description": "Hand-authored extraction expectations. Live execution is explicit and paid.",
+  "cases": [
+    {
+      "id": "body_weight_only",
+      "raw_text": "My weight is 96.2 kg.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["body"],
+      "notes": "No event time was stated.",
+      "expected": {
+        "parsed_input": {"body_metrics": [{"weight_kg": 96.2}]},
+        "null_required": ["body_metrics[0].measured_at"]
+      }
+    },
+    {
+      "id": "body_weight_today",
+      "raw_text": "Today I weighed 96.0 kg.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["body", "relative_time"],
+      "notes": "Today resolves to the fixed reference instant.",
+      "expected": {"parsed_input": {"body_metrics": [{"weight_kg": 96.0, "measured_at": "2026-07-08T19:30:00+00:00"}]}}
+    },
+    {
+      "id": "body_weight_morning",
+      "raw_text": "I weighed 95.8 kg this morning.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["body", "relative_time"],
+      "notes": "Application resolver anchors morning at 08:00 local.",
+      "expected": {"parsed_input": {"body_metrics": [{"weight_kg": 95.8, "measured_at": "2026-07-08T12:00:00+00:00"}]}}
+    },
+    {
+      "id": "body_pounds_unsupported",
+      "raw_text": "I weigh 216 lb.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["body", "safety"],
+      "notes": "The current contract has kg only; the adapter must not silently convert.",
+      "expected": {
+        "parsed_input": {"body_metrics": []},
+        "warning_required": true,
+        "unparsed_contains": ["216 lb"]
+      }
+    },
+    {
+      "id": "body_composition_vitals",
+      "raw_text": "Waist 101 cm, body fat 27.5%, resting heart rate 62 bpm.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["body"],
+      "notes": "Several measurements belong to one body-metric record.",
+      "expected": {"parsed_input": {"body_metrics": [{"waist_cm": 101, "body_fat_percent": 27.5, "resting_heart_rate": 62}]}}
+    },
+    {
+      "id": "activity_steps",
+      "raw_text": "I walked 9,000 steps.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["activity"],
+      "notes": "No timestamp inferred.",
+      "expected": {"parsed_input": {"activities": [{"steps": 9000}]}, "null_required": ["activities[0].recorded_at"]}
+    },
+    {
+      "id": "activity_distance_minutes",
+      "raw_text": "Walked 5 km and had 42 active minutes.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["activity"],
+      "notes": "Two additive activity fields.",
+      "expected": {"parsed_input": {"activities": [{"distance_km": 5, "active_minutes": 42}]}, "null_required": ["activities[0].steps", "activities[0].calories_burned"]}
+    },
+    {
+      "id": "activity_multiple_today",
+      "raw_text": "Today: 10,250 steps, 7.3 km, 55 active minutes.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["activity", "relative_time"],
+      "notes": "One activity record with a shared time.",
+      "expected": {"parsed_input": {"activities": [{"steps": 10250, "distance_km": 7.3, "active_minutes": 55, "recorded_at": "2026-07-08T19:30:00+00:00"}]}}
+    },
+    {
+      "id": "activity_yesterday",
+      "raw_text": "Yesterday I got 7,800 steps.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["activity", "relative_time"],
+      "notes": "Yesterday preserves reference wall-clock time.",
+      "expected": {"parsed_input": {"activities": [{"steps": 7800, "recorded_at": "2026-07-07T19:30:00+00:00"}]}}
+    },
+    {
+      "id": "food_simple_no_macros",
+      "raw_text": "Lunch was chicken and rice.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["food", "safety"],
+      "notes": "Names are extractable; nutrition is not.",
+      "expected": {
+        "parsed_input": {"food_entries": [{"meal_type": "lunch", "items": [{"food_name": "chicken"}, {"food_name": "rice"}]}]},
+        "null_required": ["food_entries[0].items[0].quantity", "food_entries[0].items[0].estimated_calories", "food_entries[0].items[0].protein_g", "food_entries[0].items[1].quantity", "food_entries[0].items[1].estimated_calories", "food_entries[0].items[1].protein_g"]
+      }
+    },
+    {
+      "id": "food_explicit_macros",
+      "raw_text": "Breakfast was oatmeal: 350 calories, 18 g protein, 52 g carbs, 9 g fat, 7 g fiber.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["food"],
+      "notes": "Only explicitly supplied nutrition is stored.",
+      "expected": {"parsed_input": {"food_entries": [{"meal_type": "breakfast", "items": [{"food_name": "oatmeal", "estimated_calories": 350, "protein_g": 18, "carbs_g": 52, "fat_g": 9, "fiber_g": 7}]}]}}
+    },
+    {
+      "id": "food_multiple_items",
+      "raw_text": "Dinner: salmon, potatoes, and broccoli.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["food"],
+      "notes": "Item order follows the message.",
+      "expected": {"parsed_input": {"food_entries": [{"meal_type": "dinner", "items": [{"food_name": "salmon"}, {"food_name": "potatoes"}, {"food_name": "broccoli"}]}]}}
+    },
+    {
+      "id": "food_meal_quantity",
+      "raw_text": "For breakfast I had 2 eggs.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["food"],
+      "notes": "Explicit count is retained.",
+      "expected": {"parsed_input": {"food_entries": [{"meal_type": "breakfast", "items": [{"food_name": "eggs", "quantity": 2}]}]}, "null_required": ["food_entries[0].items[0].estimated_calories", "food_entries[0].items[0].protein_g"]}
+    },
+    {
+      "id": "food_vague_quantity",
+      "raw_text": "I ate a big bowl of pasta.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["food", "safety"],
+      "notes": "Vague size is not a numeric quantity.",
+      "expected": {"parsed_input": {"food_entries": [{"items": [{"food_name": "pasta"}]}]}, "null_required": ["food_entries[0].items[0].quantity", "food_entries[0].items[0].estimated_calories", "food_entries[0].items[0].protein_g", "food_entries[0].items[0].carbs_g", "food_entries[0].items[0].fat_g"]}
+    },
+    {
+      "id": "food_no_invented_nutrition",
+      "raw_text": "Snack was a banana and peanut butter.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["food", "safety"],
+      "notes": "Common nutrition knowledge must not be inserted.",
+      "expected": {"parsed_input": {"food_entries": [{"meal_type": "snack", "items": [{"food_name": "banana"}, {"food_name": "peanut butter"}]}]}, "null_required": ["food_entries[0].items[0].estimated_calories", "food_entries[0].items[0].carbs_g", "food_entries[0].items[1].estimated_calories", "food_entries[0].items[1].fat_g"]}
+    },
+    {
+      "id": "sleep_duration_only",
+      "raw_text": "I slept 6 hours 30 minutes.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["sleep"],
+      "notes": "Duration can be normalized to minutes without assigning dates.",
+      "expected": {"parsed_input": {"sleep_entries": [{"duration_minutes": 390}]}, "null_required": ["sleep_entries[0].sleep_start", "sleep_entries[0].sleep_end", "sleep_entries[0].quality_rating"]}
+    },
+    {
+      "id": "sleep_last_night_quality",
+      "raw_text": "Last night I slept 7 hours, quality 8/10.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["sleep", "relative_time"],
+      "notes": "Last-night interval comes from the deterministic resolver.",
+      "expected": {"parsed_input": {"sleep_entries": [{"sleep_start": "2026-07-08T02:00:00+00:00", "sleep_end": "2026-07-08T11:00:00+00:00", "duration_minutes": 420, "quality_rating": 8}]}}
+    },
+    {
+      "id": "sleep_explicit_times",
+      "raw_text": "I slept from 2026-07-06 11:00 PM EDT until 2026-07-07 6:30 AM EDT.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["sleep", "explicit_time"],
+      "notes": "Explicit aware times compare as instants.",
+      "expected": {"parsed_input": {"sleep_entries": [{"sleep_start": "2026-07-07T03:00:00+00:00", "sleep_end": "2026-07-07T10:30:00+00:00"}]}, "null_required": ["sleep_entries[0].quality_rating"]}
+    },
+    {
+      "id": "sleep_partial_quality",
+      "raw_text": "Sleep quality was 5 out of 10.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["sleep"],
+      "notes": "No duration or dates are implied.",
+      "expected": {"parsed_input": {"sleep_entries": [{"quality_rating": 5}]}, "null_required": ["sleep_entries[0].duration_minutes", "sleep_entries[0].sleep_start", "sleep_entries[0].sleep_end"]}
+    },
+    {
+      "id": "workout_type_only",
+      "raw_text": "Today I trained chest.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["workout", "relative_time"],
+      "notes": "A workout may have no sets.",
+      "expected": {"parsed_input": {"workouts": [{"workout_type": "chest", "started_at": "2026-07-08T19:30:00+00:00", "sets": []}]}, "null_required": ["workouts[0].duration_minutes"]}
+    },
+    {
+      "id": "workout_exercise_load_reps",
+      "raw_text": "Bench press: 80 kg for 8 reps.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["workout"],
+      "notes": "One explicit set.",
+      "expected": {"parsed_input": {"workouts": [{"sets": [{"exercise_name": "bench press", "weight_kg": 80, "reps": 8}]}]}}
+    },
+    {
+      "id": "workout_three_sets",
+      "raw_text": "Bench press 80 kg for 8 reps for 3 sets.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["workout"],
+      "notes": "Repeated sets expand into ordered records.",
+      "expected": {"parsed_input": {"workouts": [{"sets": [{"exercise_name": "bench press", "set_number": 1, "weight_kg": 80, "reps": 8}, {"exercise_name": "bench press", "set_number": 2, "weight_kg": 80, "reps": 8}, {"exercise_name": "bench press", "set_number": 3, "weight_kg": 80, "reps": 8}]}]}}
+    },
+    {
+      "id": "workout_multiple_exercises",
+      "raw_text": "Back day: rows 60 kg x 10, then pulldowns 50 kg x 12.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["workout"],
+      "notes": "Exercise order is meaningful.",
+      "expected": {"parsed_input": {"workouts": [{"workout_type": "back", "sets": [{"exercise_name": "rows", "weight_kg": 60, "reps": 10}, {"exercise_name": "pulldowns", "weight_kg": 50, "reps": 12}]}]}}
+    },
+    {
+      "id": "workout_cardio",
+      "raw_text": "Ran 5 km in 30 minutes.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["workout", "cardio"],
+      "notes": "Distance belongs to the exercise set and duration to the session.",
+      "expected": {"parsed_input": {"workouts": [{"workout_type": "running", "duration_minutes": 30, "sets": [{"exercise_name": "running", "distance_km": 5}]}]}}
+    },
+    {
+      "id": "workout_rpe_incomplete",
+      "raw_text": "Deadlifts felt like RPE 8, but I didn't record weight or reps.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["workout", "safety"],
+      "notes": "Known exertion is kept; load and reps stay null.",
+      "expected": {"parsed_input": {"workouts": [{"sets": [{"exercise_name": "deadlifts", "rpe": 8}]}]}, "null_required": ["workouts[0].sets[0].weight_kg", "workouts[0].sets[0].reps"]}
+    },
+    {
+      "id": "mixed_weight_steps",
+      "raw_text": "I weighed 96.2 kg this morning and walked 9,000 steps today.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["mixed", "body", "activity", "relative_time"],
+      "notes": "Two domains use different deterministic anchors.",
+      "expected": {"parsed_input": {"body_metrics": [{"weight_kg": 96.2, "measured_at": "2026-07-08T12:00:00+00:00"}], "activities": [{"steps": 9000, "recorded_at": "2026-07-08T19:30:00+00:00"}]}}
+    },
+    {
+      "id": "mixed_food_workout",
+      "raw_text": "Lunch was tuna and bread. Tonight I trained shoulders.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["mixed", "food", "workout", "relative_time"],
+      "notes": "Food has no inferred time; workout uses tonight.",
+      "expected": {"parsed_input": {"food_entries": [{"meal_type": "lunch", "items": [{"food_name": "tuna"}, {"food_name": "bread"}]}], "workouts": [{"workout_type": "shoulders", "started_at": "2026-07-09T00:00:00+00:00", "sets": []}]}, "null_required": ["food_entries[0].consumed_at", "food_entries[0].items[0].estimated_calories", "food_entries[0].items[1].estimated_calories"]}
+    },
+    {
+      "id": "mixed_sleep_workout",
+      "raw_text": "Last night I slept 7 hours. Today I did legs.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["mixed", "sleep", "workout", "relative_time"],
+      "notes": "Sleep interval and workout instant are resolved independently.",
+      "expected": {"parsed_input": {"sleep_entries": [{"sleep_start": "2026-07-08T02:00:00+00:00", "sleep_end": "2026-07-08T11:00:00+00:00", "duration_minutes": 420}], "workouts": [{"workout_type": "legs", "started_at": "2026-07-08T19:30:00+00:00", "sets": []}]}}
+    },
+    {
+      "id": "mixed_body_activity_food",
+      "raw_text": "Weight 95.9 kg. I got 8,200 steps and dinner was tofu with rice.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["mixed", "body", "activity", "food"],
+      "notes": "No timestamps are inferred.",
+      "expected": {"parsed_input": {"body_metrics": [{"weight_kg": 95.9}], "activities": [{"steps": 8200}], "food_entries": [{"meal_type": "dinner", "items": [{"food_name": "tofu"}, {"food_name": "rice"}]}]}, "null_required": ["body_metrics[0].measured_at", "activities[0].recorded_at", "food_entries[0].consumed_at"]}
+    },
+    {
+      "id": "mixed_several_timestamps",
+      "raw_text": "Yesterday I walked 6,000 steps. Today I weigh 95.7 kg and tonight I will do cardio for 20 minutes.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["mixed", "relative_time"],
+      "notes": "Each domain keeps its own resolved time.",
+      "expected": {"parsed_input": {"activities": [{"steps": 6000, "recorded_at": "2026-07-07T19:30:00+00:00"}], "body_metrics": [{"weight_kg": 95.7, "measured_at": "2026-07-08T19:30:00+00:00"}], "workouts": [{"workout_type": "cardio", "started_at": "2026-07-09T00:00:00+00:00", "duration_minutes": 20, "sets": []}]}}
+    },
+    {
+      "id": "difficult_unsupported_date",
+      "raw_text": "Three Tuesdays ago I think I walked about eight thousand steps, and my meeting went well.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["difficult", "safety", "unsupported_time"],
+      "notes": "Unsupported date and approximate value should not become a structured event.",
+      "expected": {"parsed_input": {"activities": []}, "warning_required": true, "unparsed_contains": ["Three Tuesdays ago", "eight thousand steps"]}
+    },
+    {
+      "id": "difficult_ambiguous_numbers",
+      "raw_text": "Did 10 of those things, felt okay, maybe food later.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["difficult", "safety"],
+      "notes": "No domain or measurement is sufficiently identified.",
+      "expected": {"parsed_input": {"body_metrics": [], "food_entries": [], "activities": [], "sleep_entries": [], "workouts": []}, "warning_required": true, "unparsed_contains": ["10 of those things"]}
+    },
+    {
+      "id": "difficult_unrelated_with_fitness",
+      "raw_text": "The train was late, but I still walked 4,500 steps today. Remember to buy detergent.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["difficult", "activity"],
+      "notes": "Extract fitness and preserve substantial unrelated text.",
+      "expected": {"parsed_input": {"activities": [{"steps": 4500, "recorded_at": "2026-07-08T19:30:00+00:00"}]}, "unparsed_contains": ["train was late", "buy detergent"]}
+    },
+    {
+      "id": "difficult_no_fitness",
+      "raw_text": "Please remind me to call the dentist tomorrow.",
+      "reference": "2026-07-08T15:30:00-04:00",
+      "tags": ["difficult", "safety", "no_data"],
+      "notes": "No fitness records should be emitted.",
+      "expected": {"parsed_input": {"body_metrics": [], "food_entries": [], "activities": [], "sleep_entries": [], "workouts": []}, "unparsed_contains": ["call the dentist"]}
+    }
+  ]
+}
